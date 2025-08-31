@@ -3,7 +3,7 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main   # run pipeline only on main branch
+      - main
 
 jobs:
   build-and-deploy:
@@ -18,8 +18,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm ci  # clean install for CI/CD
+      - name: Clean install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Build project
         run: npm run build
@@ -28,4 +30,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist   # change to ./build if your Vite project outputs build/
+          publish_dir: ./dist   # or ./build if your Vite project outputs build/
