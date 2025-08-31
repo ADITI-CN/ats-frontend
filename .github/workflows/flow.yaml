@@ -1,47 +1,31 @@
-name: Deploy ATS Frontend to Docker Hub
+name: Deploy Frontend
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main   # run pipeline only on main branch
 
 jobs:
-  build:
-    name: Build and Push Image to Docker Hub
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-    - name: Build Docker image
-      run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ats-frontend:latest .
+      - name: Install dependencies
+        run: npm install
 
-    - name: Push Docker image to Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/ats-frontend:latest
+      - name: Build project
+        run: npm run build
 
-    - name: Deploy to EC2
-      run: |
-        echo "${{ secrets.SSHKEY }}" > ats-frontend.pem
-        chmod 600 ats-frontend.pem
-        
-        ssh -o StrictHostKeyChecking=no -i "ats-frontend.pem" ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_PASSWORD }}"
-
-          # Stop and remove the existing container
-          docker stop ats-frontend || true
-          docker rm ats-frontend || true
-
-          # Pull the latest image
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ats-frontend:latest
-
-          # Run the container with the latest image
-          docker run -d --name ats-frontend -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/ats-frontend:latest
-
-          # Remove old images (excluding the latest one)
-          docker image prune -f
-        EOF
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build   # 👈 use ./dist if your project builds into dist/
