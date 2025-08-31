@@ -18,8 +18,11 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Prepare environment
+        run: npm config set unsafe-perm true
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci  # clean install for CI/CD
 
       - name: Build project
         run: npm run build
@@ -28,4 +31,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build   # 👈 use ./dist if your project builds into dist/
+          publish_dir: ./dist   # change to ./build if your Vite project outputs build/
+
+#checking the pipeline
