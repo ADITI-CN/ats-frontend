@@ -11,7 +11,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  base: '/ats-frontend/',  
+  base: process.env.VITE_BASE || '/ats-frontend/',  
   build: {
     sourcemap: false,
   },
